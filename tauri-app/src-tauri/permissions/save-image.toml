@@ -1,0 +1,4 @@
+[[permission]]
+identifier = "allow-save-image"
+description = "Allow the image stitcher to save the stitched image to a user-chosen path and read the desktop directory."
+commands.allow = ["export_image", "desktop_dir"]
