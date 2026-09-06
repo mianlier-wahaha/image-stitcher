@@ -4,7 +4,11 @@ use base64::Engine;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![export_image, desktop_dir])
+        .invoke_handler(tauri::generate_handler![
+            export_image,
+            desktop_dir,
+            downloads_dir
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -23,4 +27,10 @@ fn export_image(data: String, path: String) -> Result<String, String> {
 #[tauri::command]
 fn desktop_dir() -> Option<String> {
     dirs::desktop_dir().map(|p| p.to_string_lossy().to_string())
+}
+
+/// 返回下载目录绝对路径，保存对话框默认打开「下载」文件夹
+#[tauri::command]
+fn downloads_dir() -> Option<String> {
+    dirs::download_dir().map(|p| p.to_string_lossy().to_string())
 }
