@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<html lang="zh-CN" data-page-node-id="eEHqv3mUZTCyMu5uHLC8td">
+<head data-page-node-id="93xcVPySf4Bqeo1CUyaqKb">
+<meta charset="UTF-8" data-page-node-id="DESUzW2OH2MBWSxYArE5rs" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="sz7ZHZumfg9sS45bRt1ycM" />
 <title>图片拼接工具</title>
 <style>
   :root {
@@ -16,6 +16,31 @@
     --danger: #ff5c72;
     --radius: 14px;
   }
+  .mask {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 60;
+    background: rgba(6, 8, 12, 0.72);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    width: 430px; max-width: calc(100% - 40px);
+    background: #151a22;
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+  }
+  .modal h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; }
+  .modal p { margin: 0 0 14px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .modal input[type="text"] {
+    width: 100%; padding: 9px 11px; font-size: 13px; font-family: inherit;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--panel-border);
+    border-radius: 9px; color: var(--text); outline: none;
+  }
+  .modal input[type="text"]:focus { border-color: var(--accent); }
+  .modal .acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .modal .acts button { padding: 8px 16px; font-size: 13px; font-family: inherit; border-radius: 9px; cursor: pointer; }
+  .modal .acts .cancel { background: transparent; border: 1px solid var(--panel-border); color: var(--muted); }
+  .modal .acts .ok { background: var(--accent); border: none; color: #fff; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
@@ -28,64 +53,56 @@
     display: flex;
     flex-direction: column;
   }
-  header {
-    padding: 18px 26px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-bottom: 1px solid var(--panel-border);
-    backdrop-filter: blur(8px);
-  }
-  header h1 { font-size: 18px; margin: 0; font-weight: 650; letter-spacing: 0.3px; }
-  header .tag {
-    font-size: 12px; color: var(--muted);
-    border: 1px solid var(--panel-border); padding: 3px 9px; border-radius: 999px;
-  }
   main {
     flex: 1;
     display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 18px;
-    padding: 18px 22px 26px;
+    grid-template-columns: 320px 1fr;
+    gap: 14px;
+    padding: 14px 18px 18px;
     min-height: 0;
   }
-  .col { min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+  .col { min-height: 0; display: flex; flex-direction: column; gap: 12px; }
   .card {
     background: var(--panel);
     border: 1px solid var(--panel-border);
     border-radius: var(--radius);
-    padding: 16px;
+    padding: 12px 13px;
   }
-  .card h2 { font-size: 13px; margin: 0 0 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+  .card h2 { font-size: 12px; margin: 0 0 8px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
 
-  /* drop zone */
-  .drop {
-    border: 1.5px dashed var(--panel-border);
-    border-radius: var(--radius);
-    padding: 22px 14px;
-    text-align: center;
-    color: var(--muted);
-    cursor: pointer;
-    transition: .18s border-color, .18s background;
-    font-size: 13px;
+  /* list card head: 标题 + 添加按钮 */
+  .list-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; margin-bottom: 10px;
   }
-  .drop:hover, .drop.over { border-color: var(--accent); background: rgba(91,140,255,0.08); color: var(--text); }
-  .drop b { color: var(--accent); }
+  .list-head h2 { margin: 0; }
+  .btn-add {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 11px; font-size: 12.5px; border-radius: 8px; cursor: pointer;
+    border: 1px dashed var(--panel-border); background: rgba(255,255,255,0.03); color: var(--text);
+    transition: .15s; font-family: inherit;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
+  .card.drag-over { border-color: var(--accent); border-style: dashed; background: rgba(91,140,255,0.06); }
 
-  /* thumbs */
-  .thumbs { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 320px; padding-right: 4px; }
+  /* 紧凑设置卡：去掉冗余空白 */
+  .card.compact { padding: 11px 13px; }
+  .settings { display: flex; flex-direction: column; gap: 6px; }
+
+  /* thumbs: 不再用 max-height，由父卡片 flex:1 自然撑满 */
+  .thumbs { display: flex; flex-direction: column; gap: 7px; overflow-y: auto; flex: 1; min-height: 0; padding-right: 4px; }
   .thumb {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 9px;
     background: rgba(255,255,255,0.03);
     border: 1px solid var(--panel-border);
-    border-radius: 10px;
-    padding: 8px;
+    border-radius: 9px;
+    padding: 7px;
     cursor: grab;
     transition: .15s border-color, .15s transform;
   }
   .thumb.dragging { opacity: .4; }
   .thumb.drag-over { border-color: var(--accent); }
-  .thumb img { width: 46px; height: 46px; object-fit: cover; border-radius: 7px; background: #000; flex: 0 0 auto; }
+  .thumb img { width: 42px; height: 42px; object-fit: cover; border-radius: 6px; background: #000; flex: 0 0 auto; }
   .thumb .meta { flex: 1; min-width: 0; }
   .thumb .name { font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .thumb .size { font-size: 11px; color: var(--muted); }
@@ -97,37 +114,37 @@
   .empty { color: var(--muted); font-size: 12.5px; text-align: center; padding: 14px 0; }
 
   /* controls */
-  .row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-  .row:last-child { margin-bottom: 0; }
-  .row label { font-size: 13px; color: var(--muted); min-width: 64px; }
-  .seg { display: flex; gap: 6px; flex: 1; }
+  .row { display: flex; align-items: center; gap: 8px; }
+  .row label { font-size: 12.5px; color: var(--muted); min-width: 50px; }
+  .seg { display: flex; gap: 5px; flex: 1; }
+  .seg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
   .seg button {
-    flex: 1; padding: 9px 0; border-radius: 10px; cursor: pointer;
+    flex: 1; padding: 7px 0; border-radius: 8px; cursor: pointer;
     border: 1px solid var(--panel-border); background: rgba(255,255,255,0.03);
-    color: var(--text); font-size: 13px; transition: .15s;
+    color: var(--text); font-size: 12.5px; transition: .15s;
   }
   .seg button.active { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; font-weight: 600; }
   input[type="range"] { flex: 1; accent-color: var(--accent); }
-  .val { font-size: 13px; color: var(--text); min-width: 40px; text-align: right; font-variant-numeric: tabular-nums; }
-  input[type="color"] { width: 40px; height: 30px; border: 1px solid var(--panel-border); border-radius: 8px; background: none; cursor: pointer; padding: 2px; }
-  .check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
+  .val { font-size: 12.5px; color: var(--text); min-width: 36px; text-align: right; font-variant-numeric: tabular-nums; }
+  input[type="color"] { width: 34px; height: 26px; border: 1px solid var(--panel-border); border-radius: 7px; background: none; cursor: pointer; padding: 2px; }
+  .check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text); cursor: pointer; }
   select {
-    flex: 1; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.03);
-    color: var(--text); border: 1px solid var(--panel-border); font-size: 13px;
+    flex: 1; padding: 7px 9px; border-radius: 8px; background: rgba(255,255,255,0.03);
+    color: var(--text); border: 1px solid var(--panel-border); font-size: 12.5px;
   }
   .btn {
-    border: none; border-radius: 11px; padding: 11px 14px; font-size: 13.5px; cursor: pointer;
+    border: none; border-radius: 10px; padding: 10px 14px; font-size: 13.5px; cursor: pointer;
     font-weight: 600; transition: .15s transform, .15s opacity;
   }
   .btn:active { transform: translateY(1px); }
   .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; flex: 1; }
   .btn-ghost { background: rgba(255,255,255,0.05); color: var(--text); border: 1px solid var(--panel-border); }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
-  .btn-row { display: flex; gap: 10px; margin-top: 4px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 6px; }
 
   /* preview */
   .preview-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-  .preview-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .preview-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .preview-head .info { font-size: 12.5px; color: var(--muted); }
   .stage {
     flex: 1; min-height: 0; overflow: auto; border-radius: var(--radius);
@@ -148,74 +165,68 @@
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 9px; }
 </style>
 </head>
-<body>
-  <header>
-    <h1>图片拼接工具</h1>
-  </header>
-
-  <main>
+<body data-page-node-id="wiL4GyDF0kBMoASGuDh3fo">
+  <main data-page-node-id="ukwmWfqQ3TgRAUwyHBNhth">
     <!-- left column -->
-    <section class="col">
-      <div class="card">
-        <h2>添加图片</h2>
-        <div class="drop" id="drop">
-          拖拽图片到此处，或 <b>点击选择</b><br />支持多选，按添加顺序拼接
+    <section class="col" data-page-node-id="HFOewN10vb1l42V2OdFkVW">
+      <!-- 图片列表卡：flex:1 撑满，标题行集成添加按钮 -->
+      <div class="card" id="listCard" style="flex:1; display:flex; flex-direction:column; min-height:0;" data-page-node-id="pgWRDm6F9c8krx4r50D6Vr">
+        <div class="list-head" data-page-node-id="listHead">
+          <h2 data-page-node-id="8DnHSIAID0wAxrjSWQ23MA">图片列表</h2>
+          <button id="addBtn" class="btn-add" type="button" data-page-node-id="addBtn" title="点击选择，也支持把图片拖到这里">＋ 添加图片</button>
         </div>
-        <input type="file" id="file" accept="image/*" multiple hidden />
-      </div>
-
-      <div class="card" style="flex:1; display:flex; flex-direction:column; min-height:0;">
-        <h2>图片列表（拖拽排序）</h2>
-        <div class="thumbs" id="thumbs">
-          <div class="empty">还没有图片</div>
+        <div class="thumbs" id="thumbs" data-page-node-id="MOHNAzOfAHpZhdfvID8Gij">
+          <div class="empty" data-page-node-id="gTGxLtj5D69PdlsB57Xyui">还没有图片（点击右上角按钮或拖入图片）</div>
         </div>
       </div>
+      <input type="file" id="file" accept="image/*" multiple hidden data-page-node-id="fOscFD7gpQDlWfG3OjEIBN" />
 
-      <div class="card">
-        <h2>拼接设置</h2>
-        <div class="row">
-          <label>方向</label>
-          <div class="seg" id="mode">
-            <button data-mode="horizontal" class="active">横向</button>
-            <button data-mode="vertical">竖向</button>
+      <!-- 紧凑化拼接设置 -->
+      <div class="card compact" data-page-node-id="sG3YKffNyLG6GO3LnFtOUB">
+        <div class="settings">
+          <div class="row" data-page-node-id="DF0D8WyJrS9lxEjy5QA0FI">
+            <label data-page-node-id="VBrXDHvGVXXarEZDJOZRhj">布局</label>
+            <div class="seg seg-grid" id="mode" data-page-node-id="6m5EaB4pLqmbYG92plLGp5">
+              <button data-mode="horizontal" class="active" data-page-node-id="upol9hk4cSuzpizJDmmb5n">横向</button>
+              <button data-mode="vertical" data-page-node-id="lXpzoU6g6U3Cs1liJSalkZ">竖向</button>
+              <button data-mode="grid2" data-page-node-id="43mHem4LW71LM5873JpDXF">四宫格</button>
+              <button data-mode="grid3" data-page-node-id="ayIOAJfVmt1jirSbbbAhzI">九宫格</button>
+            </div>
           </div>
-        </div>
-        <div class="row">
-          <label>间距</label>
-          <input type="range" id="gap" min="0" max="100" value="0" />
-          <span class="val" id="gapVal">0px</span>
-        </div>
-        <div class="row">
-          <label>背景</label>
-          <input type="color" id="bg" value="#ffffff" />
-          <label class="check"><input type="checkbox" id="transparent" /> 透明背景</label>
-        </div>
-        <div class="row">
-          <label>对齐</label>
-          <label class="check"><input type="checkbox" id="align" checked /> 等比缩放统一尺寸</label>
-        </div>
-        <div class="row">
-          <label>导出格式</label>
-          <select id="format">
-            <option value="png">PNG（无损 / 支持透明）</option>
-            <option value="jpg">JPG（体积更小）</option>
-          </select>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="export" disabled>导出拼接图</button>
-          <button class="btn btn-ghost" id="clear" disabled>清空</button>
+          <div class="row" data-page-node-id="lmVnsSsAa6WlYuUCvEgExB">
+            <label data-page-node-id="5KtVka69nvYCGG4gOGDUng">间距</label>
+            <input type="range" id="gap" min="0" max="100" value="0" data-page-node-id="oq4XmC1DTAbFzpdWMmno7V" />
+            <span class="val" id="gapVal" data-page-node-id="mQNBILMWhZeiFQxEbZuSvE">0px</span>
+          </div>
+          <div class="row" data-page-node-id="bgRow">
+            <label data-page-node-id="e4LTaMG6PjXGys3JQvIWUW">背景</label>
+            <input type="color" id="bg" value="#ffffff" data-page-node-id="A8IA5CDLdDYUpTXpk9fxes" />
+            <label class="check" data-page-node-id="fORUKZI516iGwzm5yKW0ba"><input type="checkbox" id="transparent" data-page-node-id="9E1MHpV9893K8TKEOxG76W" /> 透明</label>
+            <label class="check" style="margin-left:auto;" data-page-node-id="D0cNZRMmdCaupXac1nPHN6"><input type="checkbox" id="align" checked data-page-node-id="nmZWs5oFnr504UeoTwiDzv" /> <span id="alignLabel" data-page-node-id="i5AQFMH2ITS43XZ5lYao35">等比缩放</span></label>
+          </div>
+          <div class="row" data-page-node-id="nB0rdCODHBtFCHMpDaLFb9">
+            <label data-page-node-id="irKiPbY3DFRzHj4KxoS6vg">格式</label>
+            <select id="format" data-page-node-id="p9xDvroGVQerbtKXmx5GmU">
+              <option value="png" data-page-node-id="aEjmkV2ysvyDfvrucW6agt">PNG（无损/透明）</option>
+              <option value="jpg" data-page-node-id="UUjeKzDgGgX58zwXRB3V7M">JPG（更小）</option>
+            </select>
+          </div>
+          <div class="btn-row" data-page-node-id="LcxM8SEQ4gb72TucbGECFs">
+            <button class="btn btn-primary" id="export" disabled data-page-node-id="m8GmuuGfJBpC3ECHJ617lE">导出拼接图</button>
+            <button class="btn btn-ghost" id="clear" disabled data-page-node-id="eua89ZTsYZ06UaL1ViUjni">清空</button>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- right column -->
-    <section class="col preview-wrap">
-      <div class="preview-head">
-        <h2 style="margin:0; color:var(--muted); font-size:13px; letter-spacing:1px;">预览</h2>
-        <span class="info" id="info">未生成</span>
+    <section class="col preview-wrap" data-page-node-id="2q0GHUht3VhEbtHQBj4UUM">
+      <div class="preview-head" data-page-node-id="bf4sBAKhxpb08Jg2J4l1a7">
+        <h2 style="margin:0; color:var(--muted); font-size:13px; letter-spacing:1px;" data-page-node-id="wT2FC86uZMuO98x090f5BH">预览</h2>
+        <span class="info" id="info" data-page-node-id="MVsBvBExJjSyR3IENORGJu">未生成</span>
       </div>
-      <div class="stage" id="stage">
-        <span class="hint">添加图片后将在此实时预览拼接效果</span>
+      <div class="stage" id="stage" data-page-node-id="hCZPCzQ6axD9vyB9CpnmcP">
+        <span class="hint" data-page-node-id="DQkzzsRorpLN5MHitG3dDP">添加图片后将在此实时预览拼接效果</span>
       </div>
     </section>
   </main>
@@ -237,13 +248,14 @@
   var canvas = document.createElement("canvas");
   var ctx = canvas.getContext("2d");
 
-  var drop = document.getElementById("drop");
   var fileInput = document.getElementById("file");
   var thumbsEl = document.getElementById("thumbs");
   var stage = document.getElementById("stage");
   var infoEl = document.getElementById("info");
   var exportBtn = document.getElementById("export");
   var clearBtn = document.getElementById("clear");
+  var addBtn = document.getElementById("addBtn");
+  var listCard = document.getElementById("listCard");
 
   // ---- add images ----
   function handleFiles(fileList) {
@@ -270,25 +282,35 @@
     });
   }
 
-  drop.addEventListener("click", function () { fileInput.click(); });
+  addBtn.addEventListener("click", function () { fileInput.click(); });
+  // 文件选择后清空 value，便于重复选同一文件
   fileInput.addEventListener("change", function (e) {
     handleFiles(e.target.files);
     fileInput.value = "";
   });
+  // 拖拽接收：从外部拖图片到列表卡（替代原来的 drop 框）
   ["dragenter", "dragover"].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); });
+    listCard.addEventListener(ev, function (e) {
+      e.preventDefault();
+      listCard.classList.add("drag-over");
+    });
   });
   ["dragleave", "drop"].forEach(function (ev) {
-    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+    listCard.addEventListener(ev, function (e) {
+      e.preventDefault();
+      listCard.classList.remove("drag-over");
+    });
   });
-  drop.addEventListener("drop", function (e) {
+  listCard.addEventListener("drop", function (e) {
     if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
   });
-  // allow dropping anywhere on the page
+  // 兜底：拖到页面任何位置都接收
   window.addEventListener("dragover", function (e) { e.preventDefault(); });
   window.addEventListener("drop", function (e) {
     e.preventDefault();
-    if (e.dataTransfer && e.dataTransfer.files && e.target !== drop) handleFiles(e.dataTransfer.files);
+    if (e.dataTransfer && e.dataTransfer.files && e.target !== listCard && !listCard.contains(e.target)) {
+      handleFiles(e.dataTransfer.files);
+    }
   });
 
   // ---- thumbnails with drag-to-reorder ----
@@ -371,6 +393,28 @@
       H = state.align ? Math.round(baseH) : Math.round(Math.max.apply(null, imgs.map(function (i) { return i.h; })));
       var x = 0;
       draws.forEach(function (d) { d.dx = Math.round(x); d.dy = 0; x += d.dw + gap; });
+    } else if (state.mode === "grid2" || state.mode === "grid3") {
+      // 网格：cols 列，rows 行；图片多于格子数自动加行，不足则末行留空
+      var cols = state.mode === "grid2" ? 2 : 3;
+      var rows = Math.ceil(n / cols);
+      var cellW = Math.max.apply(null, imgs.map(function (i) { return i.w; }));
+      var cellH = Math.max.apply(null, imgs.map(function (i) { return i.h; }));
+      W = Math.round(cols * cellW + gap * (cols - 1));
+      H = Math.round(rows * cellH + gap * (rows - 1));
+      draws = imgs.map(function (i, idx) {
+        var r = Math.floor(idx / cols), c = idx % cols;
+        var cellX = c * (cellW + gap), cellY = r * (cellH + gap);
+        var scale = state.align
+          ? Math.max(cellW / i.w, cellH / i.h)   // 填满格子（多余部分裁掉）
+          : Math.min(cellW / i.w, cellH / i.h);  // 完整显示（留白由背景色填充）
+        var dw = i.w * scale, dh = i.h * scale;
+        return {
+          el: i.el, dw: dw, dh: dh,
+          dx: cellX + (cellW - dw) / 2,
+          dy: cellY + (cellH - dh) / 2,
+          clip: { x: cellX, y: cellY, w: cellW, h: cellH }
+        };
+      });
     } else {
       var baseW = state.align ? Math.max.apply(null, imgs.map(function (i) { return i.w; })) : 0;
       var totalH = 0;
@@ -390,6 +434,48 @@
     return { W: W, H: H, draws: draws };
   }
 
+  // 统一绘制入口：网格模式下图片可能溢出格子，需按格子做 clip 裁剪
+  function paint(target, lay, forceBg) {
+    target.clearRect(0, 0, lay.W, lay.H);
+    if (forceBg || !state.transparent) {
+      target.fillStyle = state.bg;
+      target.fillRect(0, 0, lay.W, lay.H);
+    }
+    lay.draws.forEach(function (d) {
+      if (d.clip) {
+        target.save();
+        target.beginPath();
+        target.rect(d.clip.x, d.clip.y, d.clip.w, d.clip.h);
+        target.clip();
+        target.drawImage(d.el, d.dx, d.dy, d.dw, d.dh);
+        target.restore();
+      } else {
+        target.drawImage(d.el, d.dx, d.dy, d.dw, d.dh);
+      }
+    });
+  }
+
+  // 浏览器 canvas 有尺寸上限，超出后绘制与 toBlob 会静默失败（预览全白、导出点不动）
+  var MAX_DIM = 16384, MAX_AREA = 100000000;
+  function fitLayout(lay) {
+    var area = lay.W * lay.H;
+    if (lay.W <= MAX_DIM && lay.H <= MAX_DIM && area <= MAX_AREA) return { lay: lay, scaled: false };
+    // 留 2% 余量并用 floor 取整：两边各自取整后乘积会略微回弹，否则仍可能刚好超限
+    var s = Math.min(MAX_DIM / lay.W, MAX_DIM / lay.H, Math.sqrt(MAX_AREA * 0.98 / area));
+    return {
+      lay: {
+        W: Math.max(1, Math.floor(lay.W * s)),
+        H: Math.max(1, Math.floor(lay.H * s)),
+        draws: lay.draws.map(function (d) {
+          var nd = { el: d.el, dw: d.dw * s, dh: d.dh * s, dx: d.dx * s, dy: d.dy * s };
+          if (d.clip) nd.clip = { x: d.clip.x * s, y: d.clip.y * s, w: d.clip.w * s, h: d.clip.h * s };
+          return nd;
+        })
+      },
+      scaled: true
+    };
+  }
+
   function updatePreview() {
     var has = state.images.length > 0;
     exportBtn.disabled = !has;
@@ -399,31 +485,38 @@
       infoEl.textContent = "未生成";
       return;
     }
-    var lay = computeLayout();
+    var fit = fitLayout(computeLayout());
+    var lay = fit.lay;
     canvas.width = lay.W;
     canvas.height = lay.H;
-    ctx.clearRect(0, 0, lay.W, lay.H);
-    if (!state.transparent) {
-      ctx.fillStyle = state.bg;
-      ctx.fillRect(0, 0, lay.W, lay.H);
-    }
-    lay.draws.forEach(function (d) {
-      ctx.drawImage(d.el, d.dx, d.dy, d.dw, d.dh);
-    });
+    paint(ctx, lay, false);
 
     // refresh stage (keep checkerboard)
     stage.innerHTML = "";
     stage.appendChild(canvas);
-    infoEl.textContent = lay.W + " × " + lay.H + " px · " + state.images.length + " 张";
+    var desc = "";
+    if (state.mode === "grid2" || state.mode === "grid3") {
+      var gc = state.mode === "grid2" ? 2 : 3;
+      desc = gc + " × " + Math.ceil(state.images.length / gc) + " 网格 · ";
+    }
+    infoEl.textContent = desc + lay.W + " × " + lay.H + " px · " + state.images.length + " 张" + (fit.scaled ? "（超出画布上限，已等比缩小）" : "");
   }
 
   // ---- controls ----
+  // 缩放开关在网格模式下语义不同：控制「填满格子(裁切)」还是「完整显示(留白)」
+  function updateAlignLabel() {
+    var isGrid = state.mode === "grid2" || state.mode === "grid3";
+    document.getElementById("alignLabel").textContent =
+      isGrid ? "填满格子（裁切多余）" : "等比缩放统一尺寸";
+  }
+
   document.getElementById("mode").addEventListener("click", function (e) {
     var b = e.target.closest("button");
     if (!b) return;
     state.mode = b.dataset.mode;
     Array.prototype.forEach.call(this.children, function (c) { c.classList.remove("active"); });
     b.classList.add("active");
+    updateAlignLabel();
     updatePreview();
   });
   var gapInput = document.getElementById("gap");
@@ -446,20 +539,116 @@
     state.format = e.target.value;
   });
 
+  // ---- 保存相关辅助 ----
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function stamp() {
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate()) +
+      "-" + pad2(d.getHours()) + "-" + pad2(d.getMinutes()) + "-" + pad2(d.getSeconds());
+  }
+
+  // 把拼接结果直接显示在预览区（浏览器环境无法保证下载成功时的兜底反馈）
+  function showResult(url, lay) {
+    var wrap = document.createElement("div");
+    wrap.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:10px;padding:6px;";
+    var img = document.createElement("img");
+    img.src = url;
+    img.style.cssText = "max-width:100%;max-height:68vh;border-radius:6px;box-shadow:0 8px 30px rgba(0,0,0,0.45);";
+    var tip = document.createElement("div");
+    tip.style.cssText = "font-size:13px;color:var(--muted);text-align:center;line-height:1.6;";
+    tip.textContent = "拼接结果（" + lay.W + " × " + lay.H + " px）。若未自动保存，可右键图片另存。";
+    wrap.appendChild(img);
+    wrap.appendChild(tip);
+    stage.innerHTML = "";
+    stage.appendChild(wrap);
+  }
+
+  // 自定义命名弹窗：无系统保存对话框时的兜底（可改文件名，目录由环境决定）
+  function askSaveName(defaultName, note) {
+    return new Promise(function (resolve) {
+      var mask = document.createElement("div");
+      mask.className = "mask";
+      var box = document.createElement("div");
+      box.className = "modal";
+      var h = document.createElement("h3");
+      h.textContent = "保存拼接图";
+      var p = document.createElement("p");
+      p.textContent = note || "请确认文件名，完成后将保存到默认下载文件夹。";
+      var input = document.createElement("input");
+      input.type = "text";
+      input.value = defaultName;
+      var acts = document.createElement("div");
+      acts.className = "acts";
+      var cancel = document.createElement("button");
+      cancel.className = "cancel"; cancel.textContent = "取消";
+      var ok = document.createElement("button");
+      ok.className = "ok"; ok.textContent = "保存";
+      acts.appendChild(cancel);
+      acts.appendChild(ok);
+      box.appendChild(h); box.appendChild(p); box.appendChild(input); box.appendChild(acts);
+      mask.appendChild(box);
+      document.body.appendChild(mask);
+
+      var done = false;
+      function clean(v) {
+        var s = String(v || "").replace(/[\\/:*?"<>|]/g, "").trim();
+        return s || defaultName;
+      }
+      function finish(v) {
+        if (done) return;
+        done = true;
+        document.removeEventListener("keydown", onKey);
+        if (mask.parentNode) mask.parentNode.removeChild(mask);
+        resolve(v);
+      }
+      function onKey(e) {
+        if (e.key === "Escape") finish(null);
+        else if (e.key === "Enter") finish(clean(input.value));
+      }
+      cancel.addEventListener("click", function () { finish(null); });
+      ok.addEventListener("click", function () { finish(clean(input.value)); });
+      mask.addEventListener("click", function (e) { if (e.target === mask) finish(null); });
+      document.addEventListener("keydown", onKey);
+      setTimeout(function () { input.focus(); input.select(); }, 0);
+    });
+  }
+
   // ---- export ----
-  exportBtn.addEventListener("click", function () {
+  exportBtn.addEventListener("click", async function () {
     if (!state.images.length) return;
-    var lay = computeLayout();
+
+    // 浏览器环境：必须趁用户点击的“瞬时激活”还在，同步发起系统保存窗口请求，
+    // 否则等到 toBlob 异步回调里再调会被浏览器以“缺少用户手势”为由拒绝。
+    var fsHandle = null;
+    if (!window.__TAURI__ && typeof window.showSaveFilePicker === "function") {
+      var extNow = state.format === "png" ? "png" : "jpg";
+      try {
+        fsHandle = await window.showSaveFilePicker({
+          suggestedName: "拼接图-" + stamp() + "." + extNow,
+          startIn: "downloads",
+          types: [{
+            description: "图片文件",
+            accept: extNow === "png" ? { "image/png": [".png"] } : { "image/jpeg": [".jpg", ".jpeg"] }
+          }]
+        });
+      } catch (e) {
+        if (e && e.name === "AbortError") { infoEl.textContent = "已取消导出"; return; }
+        fsHandle = null; // 非取消类错误（如非安全上下文）则回退到自定义弹窗
+      }
+    }
+
+    var fit = fitLayout(computeLayout());
+    var lay = fit.lay;
+    infoEl.textContent = "正在导出…";
     var out = document.createElement("canvas");
     out.width = lay.W; out.height = lay.H;
-    var octx = out.getContext("2d");
-    if (state.format === "jpg" || !state.transparent) {
-      octx.fillStyle = state.bg;
-      octx.fillRect(0, 0, lay.W, lay.H);
+    try {
+      paint(out.getContext("2d"), lay, state.format === "jpg");
+    } catch (err) {
+      alert("绘制失败：" + ((err && err.message) ? err.message : err));
+      infoEl.textContent = "导出失败";
+      return;
     }
-    lay.draws.forEach(function (d) {
-      octx.drawImage(d.el, d.dx, d.dy, d.dw, d.dh);
-    });
     var mime = state.format === "png" ? "image/png" : "image/jpeg";
     var ext = state.format === "png" ? "png" : "jpg";
     var filename = "拼接图-" + Date.now() + "." + ext;
@@ -474,45 +663,66 @@
     }
 
     out.toBlob(async function (blob) {
-      if (!blob) return;
+      if (!blob) {
+        alert("导出失败：画布超出浏览器上限（" + lay.W + " × " + lay.H + "）。请减少图片数量、缩小间距，或改用横向/竖向拼接。");
+        infoEl.textContent = "导出失败";
+        return;
+      }
       var buf = await blob.arrayBuffer();
       var bytes = new Uint8Array(buf);
       try {
-        // 1) Tauri：JS 侧用官方 dialog 插件弹系统“保存”对话框（可选目录+改文件名，默认桌面），再交 Rust 写盘
+        // 1) Tauri：系统“保存”对话框（可选目录 + 改文件名，默认打开「下载」文件夹），再交 Rust 写盘
         var T = window.__TAURI__;
         var invoke = (T && T.tauri && T.tauri.invoke) || (T && T.core && T.core.invoke);
-        if (T && T.dialog && T.dialog.save && invoke) {
-          var d = new Date();
-          function pad(n){ return (n < 10 ? "0" : "") + n; }
-          var ts = d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "-" + pad(d.getHours()) + "-" + pad(d.getMinutes()) + "-" + pad(d.getSeconds());
-          var defaultName = "拼接图-" + ts + "." + ext;
-          var desk = null;
-          try { desk = await invoke("desktop_dir"); } catch (e) { desk = null; }
-          var defaultPath = (desk ? desk + "/" : "") + defaultName;
-          var savePath = await T.dialog.save({
-            title: "导出拼接图",
-            defaultPath: defaultPath,
-            filters: [{ name: "图片文件", extensions: [ext] }]
-          });
+        if (T && invoke) {
+          var defaultName = "拼接图-" + stamp() + "." + ext;
+          var dir = null;
+          try { dir = await invoke("downloads_dir"); } catch (e) { dir = null; }
+          var savePath = null;
+          if (T.dialog && T.dialog.save) {
+            savePath = await T.dialog.save({
+              title: "导出拼接图",
+              defaultPath: (dir ? dir + "/" : "") + defaultName,
+              filters: [{ name: "图片文件", extensions: [ext] }]
+            });
+          } else {
+            var nm = await askSaveName(defaultName,
+              "未检测到系统保存对话框，文件将保存到「下载」文件夹。可修改文件名后保存。");
+            if (nm) savePath = (dir ? dir + "/" : "") + nm;
+          }
           if (!savePath) { infoEl.textContent = "已取消导出"; return; }
-          var b64 = bufToBase64(bytes);
-          await invoke("export_image", { data: b64, path: savePath });
+          await invoke("export_image", { data: bufToBase64(bytes), path: savePath });
           infoEl.textContent = "已导出：" + savePath;
           return;
         }
-        // 2) Electron：preload 桥接
-        if (window.stitchApi && window.stitchApi.exportImage) {
-          var saved2 = await window.stitchApi.exportImage(bytes, ext);
-          if (!saved2) { infoEl.textContent = "已取消导出"; return; }
-          infoEl.textContent = "已导出：" + saved2;
-          return;
+        // 2) 浏览器：若点击时已拿到系统保存窗口句柄，直接写入用户选择的目录
+        var url = URL.createObjectURL(blob);
+        if (fsHandle) {
+          try {
+            var w = await fsHandle.createWritable();
+            await w.write(blob);
+            await w.close();
+            infoEl.textContent = "已导出：" + (fsHandle.name || filename);
+            setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+            return;
+          } catch (e) {
+            if (e && e.name === "AbortError") { infoEl.textContent = "已取消导出"; return; }
+          }
         }
-        // 3) 浏览器：直接下载
+        // 3) 兜底：自定义命名弹窗 + 浏览器下载（目录由浏览器决定，通常即「下载」文件夹）
+        var typed = await askSaveName(filename,
+          "当前环境不支持选择保存目录，文件将保存到浏览器的默认下载文件夹。可修改文件名。");
+        if (!typed) { infoEl.textContent = "已取消导出"; return; }
         var a = document.createElement("a");
-        a.download = filename;
-        a.href = URL.createObjectURL(blob);
+        a.download = typed;
+        a.href = url;
+        a.rel = "noopener";
+        document.body.appendChild(a);
         a.click();
-        setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+        document.body.removeChild(a);
+        showResult(url, lay);
+        infoEl.textContent = "已导出：" + typed;
+        setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
       } catch (err) {
         alert("导出失败：" + ((err && err.message) ? err.message : err));
       }
