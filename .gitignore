@@ -2,13 +2,9 @@
 node_modules/
 
 # 构建产物
-/dist/
 /tauri-app/src-tauri/target/
 /tauri-app/src-tauri/gen/
 *.dmg
-
-# 图标生成中间文件
-/build/icon.iconset/
 
 # 系统文件
 .DS_Store
