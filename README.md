@@ -1,34 +1,30 @@
 # 图片拼接工具
 
-一个轻量、本地运行的图片拼接桌面应用。支持横向 / 竖向拼接多张图片，可调节间距、背景色、等比缩放，并导出为 PNG / JPG。
+一个轻量、本地运行的图片拼接桌面应用。支持横向 / 竖向 / 四宫格 / 九宫格拼接多张图片，可调节间距、背景色与填充方式，并导出为 PNG / JPG。
 
 > 本工具完全在本地运行，不会上传任何图片，保护隐私。
 
 ## ✨ 功能特性
 
-- 🧩 **多图拼接**：支持横向、竖向两种拼接方向
+- 🧩 **多种布局**：横向、竖向、四宫格（2 列）、九宫格（3 列）。图片多于格子数会自动加行，不足则末行留空
 - 🖱️ **拖拽导入**：拖入多张图片，支持拖拽排序、单张删除
 - 📐 **间距调节**：图片之间可设置间距（默认 0px）
 - 🎨 **背景设置**：自定义背景色，或透明背景
-- 🔍 **等比缩放**：可选对图片做等比缩放后再拼接
+- 🔍 **填充方式**：网格布局下可选「填满格子（裁切多余）」或「完整显示（留白）」
 - 👁️ **实时预览**：参数调整即时反映到预览画面
-- 💾 **本地导出**：导出时弹出系统保存对话框，可重命名、默认保存到桌面；支持 PNG / JPG
+- 💾 **本地导出**：弹出系统保存对话框，可改名、可选择目录，默认打开「下载」文件夹；支持 PNG / JPG
+- 🛡️ **大图保护**：拼接结果超出画布上限时自动等比缩小，并在界面标注
 - 🔒 **隐私优先**：纯本地处理，图片不出本机
 
 ## 🖥️ 技术栈
 
-同一套前端 UI，提供两种桌面打包方式：
-
-| 方案 | 体积 | 说明 |
-|------|------|------|
-| **Tauri（推荐）** | ~3.2 MB | 基于系统 WebView，体积小、资源占用低，适合分发 |
-| Electron | ~105 MB | 内置 Chromium，兼容性强 |
+- 前端：单文件 `index.html`（原生 HTML / CSS / JavaScript，Canvas 绘制）
+- 桌面封装：**Tauri v2**，调用系统 WebView（macOS 为 WKWebView），不内置浏览器内核
+- 安装包体积：约 3 MB
 
 ## 📦 构建与运行
 
-### 方式一：Tauri（推荐）
-
-环境要求：Node.js 18+，Rust 稳定版（建议 1.70+），macOS 自带 WebView。
+环境要求：Node.js 18+、Rust 稳定版（建议 1.70+），macOS 自带 WebView。
 
 ```bash
 cd tauri-app
@@ -42,15 +38,7 @@ npm run tauri build     # 产物在 src-tauri/target/release/bundle/
 npm run tauri dev
 ```
 
-### 方式二：Electron
-
-环境要求：Node.js 18+。
-
-```bash
-npm install
-npm start               # 启动应用
-npm run dist            # 打包 dmg（输出到 dist/）
-```
+本地直接用浏览器打开根目录 `index.html` 也能使用大部分功能，此时导出走浏览器下载（可选文件名）。
 
 ## 🎨 图标
 
@@ -59,19 +47,16 @@ npm run dist            # 打包 dmg（输出到 dist/）
 - `gen_icon.py`：生成当前使用的图标（彩色拼图风格）
 - `gen_icons_variants.py`：生成 5 个候选变体（位于 `build/variants/`）
 
-更换图标后，进入 `tauri-app/src-tauri` 执行 `npx tauri icon icon.png` 重新生成 `.icns`。
+更换图标：把选中的 PNG 复制为 `tauri-app/src-tauri/icon.png`，再在该目录执行 `npx tauri icon icon.png` 重新生成 `.icns`。
 
 ## 📁 目录结构
 
 ```
 .
-├── index.html                 # 独立 Web 版 / Electron 前端
-├── main.js / preload.js       # Electron 主进程
-├── package.json               # Electron 构建配置
+├── index.html                 # 前端源码（Tauri 与浏览器共用）
 ├── gen_icon.py                # 图标生成脚本
 ├── gen_icons_variants.py      # 图标候选生成脚本
 ├── build/
-│   ├── icon_1024.png          # 图标源图
 │   └── variants/              # 5 个图标候选
 └── tauri-app/                 # Tauri v2 工程
     ├── frontend/index.html    # Tauri 前端（与根 index.html 一致）
